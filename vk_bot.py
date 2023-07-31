@@ -1,21 +1,22 @@
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from random import randrange
+import threading
 
 
 class VKBot:
     """
-    Класс для взаимодействия с API VK и обработки входящих сообщений от пользователей.
+    Класс для взаимодействия с API VK и обработки сообщений от пользователей.
 
     Args:
         vk_group_token (str): Токен группы VK для взаимодействия с API.
         server_confirmation_token (str): Токен для подтверждения сервера VK.
-        secret_chat_token (str): Секретный токен для проверки сообщений от пользователей.
+        secret_chat_token (str): Токен для проверки подлинности сообщений от пользователей.
 
     Attributes:
         vk_group_token (str): Токен группы VK для взаимодействия с API.
         server_confirmation_token (str): Токен для подтверждения сервера VK.
-        secret_chat_token (str): Секретный токен для проверки сообщений от пользователей.
+        secret_chat_token (str): Токен для проверки подлинности сообщений от пользователей.
         vk (vk_api.VkApiMethod): Объект для работы с методами VK API.
         longpoll (vk_api.longpoll.VkLongPoll): Объект для работы с Long Poll событиями VK.
     """
@@ -52,13 +53,24 @@ class VKBot:
         """
         for event in self.longpoll.listen():
             if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                request = event.text
                 user_id = event.user_id
+                request = event.text
 
-                # Обработка входящего сообщения и отправка ответа здесь
+                # Обработка сообщения и отправка ответа здесь
                 # При необходимости можно вызывать функции из других модулей
 
-    def confirm_server(self, data):
+    def start_listening(self):
+        """
+        Запускает прослушивание входящих сообщений в отдельном потоке с использованием threading.Timer.
+
+        Returns:
+            None
+        """
+        self.receive_messages()  # First call to receive_messages
+        threading.Timer(1, self.start_listening).start()  # Schedule the next call to receive_messages after 1 second
+
+    @staticmethod
+    def confirm_server(data):
         """
         Обрабатывает запрос от VK для подтверждения сервера.
 
@@ -66,38 +78,9 @@ class VKBot:
             data (dict): JSON-данные запроса от VK.
 
         Returns:
-            str: Строка подтверждения сервера ("e448a003") при успешном запросе,
-                 или пустая строка в случае другого типа запроса.
+            str: Строка подтверждения сервера при успешном запросе.
         """
         if data.get("type") == "confirmation" and data.get("group_id"):
-            return "e448a003"  # Возвращаем строку подтверждения сервера
+            # VK will send a confirmation string to your server, and you should return it here
+            return "e448a003"  # Replace this with the confirmation string provided by VK
         return ""  # Возвращаем пустую строку, если это не запрос на подтверждение
-
-    def handle_message(self, data):
-        """
-        Обрабатывает входящее сообщение от пользователя.
-
-        Args:
-            data (dict): JSON-данные запроса от VK.
-
-        Returns:
-            None
-        """
-        # Проверяем секретный токен во входящем сообщении
-        if "secret" in data and data["secret"] == self.secret_chat_token:
-            # Если токен совпадает, обрабатываем сообщение и отправляем ответ
-            user_id = data.get("user_id")
-            if user_id:
-                self.send_message(user_id, "Вы отправили: " + data.get("text"))
-        else:
-            # Если токен не совпадает, игнорируем сообщение
-            pass
-
-    def start_listening(self):
-        """
-        Запускает прослушивание входящих сообщений VK.
-
-        Returns:
-            None
-        """
-        self.receive_messages()

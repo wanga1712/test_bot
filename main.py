@@ -7,8 +7,7 @@ import threading
 
 if __name__ == "__main__":
     try:
-        # Загрузка переменных окружения из файла .env
-        load_dotenv(dotenv_path=r'C:\Users\wangr\PycharmProjects\pythonProject8\keys.env')
+        load_dotenv(dotenv_path=r'C:\Users\wangr\PycharmProjects\pythonProject8\keys.env')  # Загрузка переменных окружения из файла .env
         vk_group_token = os.getenv("CHAT_TOKEN")
         server_confirmation_token = os.getenv("VK_API_TOKEN")
         secret_chat_token = os.getenv("SECRET_CHAT_TOKEN")
@@ -25,12 +24,16 @@ if __name__ == "__main__":
         httpd_thread = threading.Thread(target=httpd.serve_forever)
         httpd_thread.start()
 
-        # В основном потоке выполнения запускаем прослушивание входящих сообщений VK
+        # Запускаем прослушивание входящих сообщений VK в отдельном потоке
+        listening_thread = threading.Thread(target=bot.start_listening)
+        listening_thread.start()
+
+        # В основном потоке выполнения выводим сообщение о запуске
         print("VKBot запущен.")
-        bot.start_listening()
 
         # Ожидаем завершения работы HTTP-сервера
         httpd_thread.join()
+        listening_thread.join()
 
         # Этот код будет выполнен только после остановки HTTP-сервера, что произойдет только если его остановят вручную.
         print("Сервер остановлен.")
