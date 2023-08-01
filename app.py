@@ -31,12 +31,6 @@ class ConfirmationHandler(BaseHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def do_POST(self):
-        """
-        Обрабатывает POST-запрос от VK для подтверждения сервера или входящее сообщение от пользователя.
-
-        Returns:
-            None
-        """
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
         data = json.loads(post_data.decode("utf-8"))
@@ -44,16 +38,21 @@ class ConfirmationHandler(BaseHTTPRequestHandler):
         print("Received data from VK:", data)  # Debug print to see the received data
 
         if "type" in data and data["type"] == "confirmation" and "group_id" in data:
-            # Если это запрос подтверждения сервера от VK, отправляем код подтверждения
             confirmation_response = self.bot.confirm_server(data)
+            print("Sending confirmation response:", confirmation_response)  # Add log to see the confirmation response
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
-            self.end_headers()
+            self.end_headers()  # Add this line to end the headers
             self.wfile.write(confirmation_response.encode("utf-8"))
-        else:
-            # Если это входящее сообщение от пользователя, проверяем секретный ключ
+        elif "type" in data and data["type"] == "message_new":
+            # Process the user message
             self.bot.handle_message(data)
+
+            # Send a single response to the VK server after processing the user message
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
             self.wfile.write(b"Message received and processed!")
+
+            # Reset the response_sent flag after sending the response
+            self.bot.reset_response_flag()
