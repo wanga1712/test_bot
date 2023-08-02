@@ -3,30 +3,7 @@ import json
 
 
 class ConfirmationHandler(BaseHTTPRequestHandler):
-    """
-    Обработчик для подтверждения сервера VK.
-
-    Args:
-        BaseHTTPRequestHandler (class): Базовый класс для обработки HTTP-запросов.
-
-    Methods:
-        do_POST(): Метод для обработки POST-запроса от VK.
-
-    Attributes:
-        bot (VKBot): Объект класса VKBot для взаимодействия с API VK и обработки запроса.
-    """
-
     def __init__(self, *args, **kwargs):
-        """
-        Инициализация обработчика.
-
-        Args:
-            *args: Позиционные аргументы базового класса.
-            **kwargs: Ключевые аргументы базового класса.
-
-        Returns:
-            None
-        """
         self.bot = kwargs.pop('bot', None)
         super().__init__(*args, **kwargs)
 
@@ -48,11 +25,14 @@ class ConfirmationHandler(BaseHTTPRequestHandler):
             # Process the user message
             self.bot.handle_message(data)
 
-            # Send a single response to the VK server after processing the user message
+            # Respond to the VK server with "OK" for message_new events
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
-            self.wfile.write(b"Message received and processed!")
-
-            # Reset the response_sent flag after sending the response
-            self.bot.reset_response_flag()
+            self.wfile.write(b"OK")
+        else:
+            # Respond to other events with "OK"
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"OK")
