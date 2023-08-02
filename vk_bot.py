@@ -25,16 +25,18 @@ class VKBot:
                 self.last_processed_message_id = message["conversation_message_id"]
                 user_id = message["from_id"]
                 text = message["text"]
-                # Здесь обрабатываем сообщение от пользователя
                 print(f"Received message from user_id {user_id}: {text}")
 
-                # Here you can add code to process the message and send a response back to the user
-                response_message = "This is a response message to the user"
+                # Check the user's message to decide the response
+                if text.lower() == "find me a pair":
+                    response_message = "Pair selection has begun"
+                else:
+                    response_message = "The command is not recognized. To get started, write a message 'find me a pair'."
+
+                # Send the response to the user
                 self.vk.messages.send(user_id=user_id, message=response_message, random_id=0)
 
-                self.response_sent = True  # Set the flag to True after sending a response
-
-                # Reset the response_sent flag before processing the next message
+                self.response_sent = True
                 self.reset_response_flag()
 
         elif data.get("type") == "message_reply":
@@ -57,5 +59,5 @@ class VKBot:
                  или пустая строка в случае другого типа запроса.
         """
         if data.get("type") == "confirmation" and data.get("group_id"):
-            return "0b173ce7"  # Возвращаем строку подтверждения сервера
+            return "147eac79"  # Возвращаем строку подтверждения сервера
         return ""  # Возвращаем пустую строку, если это не запрос на подтверждение
